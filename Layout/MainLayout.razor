@@ -40,13 +40,40 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await Auth.InitializeAsync();
+        // Belangrijk: EERST abonneren, DAN pas Firebase initialiseren.
+        // Zo missen we nooit de eerste melding over de inlogstatus.
         Auth.OnChange += HandleChange;
-        await CheckPinAsync();
+        await Auth.InitializeAsync();
+
+        // Ook meteen zelf checken, voor het geval de melding al binnen was
+        // vlak voordat we ons konden abonneren.
+        await ProcessAuthStateAsync();
     }
 
-    private async Task CheckPinAsync()
+    private void HandleChange()
     {
+        InvokeAsync(async () => await ProcessAuthStateAsync());
+    }
+
+    private async Task ProcessAuthStateAsync()
+    {
+        if (!Auth.IsAuthReady)
+        {
+            return;
+        }
+
+        if (Auth.CurrentUser is null && !IsLoginPage)
+        {
+            Nav.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        if (Auth.CurrentUser is not null && IsLoginPage)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+            return;
+        }
+
         if (Auth.CurrentUser is not null)
         {
             _hasPin = await PinLock.HasPinSetAsync();
@@ -54,28 +81,6 @@ else
 
         _pinCheckDone = true;
         StateHasChanged();
-    }
-
-    private void HandleChange()
-    {
-        InvokeAsync(async () =>
-        {
-            if (Auth.CurrentUser is null && !IsLoginPage)
-            {
-                Nav.NavigateTo("/login");
-            }
-            else if (Auth.CurrentUser is not null && IsLoginPage)
-            {
-                Nav.NavigateTo("/");
-            }
-
-            if (Auth.CurrentUser is not null)
-            {
-                await CheckPinAsync();
-            }
-
-            StateHasChanged();
-        });
     }
 
     private void HandlePinSet()
