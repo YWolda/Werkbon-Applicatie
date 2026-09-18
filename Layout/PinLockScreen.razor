@@ -5,38 +5,41 @@
     <div class="login-card">
         <img src="img/boikon-logo.jpg" class="login-logo" alt="BOIKON" />
         <h2>Ontgrendelen</h2>
-        <p class="text-muted">Voer je 4-cijferige pincode in.</p>
+        <p class="text-muted">Voer je pincode in.</p>
 
-        <input type="tel" inputmode="numeric" maxlength="4" class="form-control mb-2 pin-input"
-               placeholder="Pincode" @bind="_pin" @bind:event="oninput" @onkeyup="HandleKeyUp" />
+        <div class="pin-dots mb-3">
+            @for (int i = 0; i < 4; i++)
+            {
+                <span class="pin-dot @(i < _input.Length ? "filled" : "")"></span>
+            }
+        </div>
 
         @if (!string.IsNullOrEmpty(_error))
         {
             <div class="alert alert-danger">@_error</div>
         }
 
-        <button class="btn btn-primary w-100 mb-2" @onclick="Unlock">Ontgrendelen</button>
-        <button class="btn btn-link w-100" @onclick="Logout">Pincode vergeten? Log opnieuw in</button>
+        <NumericKeypad OnDigit="HandleDigit" OnBackspace="HandleBackspace" />
+
+        <button class="btn btn-link w-100 mt-2" @onclick="Logout">Pincode vergeten? Log opnieuw in</button>
     </div>
 </div>
 
 @code {
     [Parameter] public EventCallback OnUnlocked { get; set; }
 
-    private string _pin = string.Empty;
+    private string _input = string.Empty;
     private string? _error;
 
-    private async Task HandleKeyUp(KeyboardEventArgs e)
+    private async Task HandleDigit(string digit)
     {
-        if (e.Key == "Enter")
-        {
-            await Unlock();
-        }
-    }
+        if (_input.Length >= 4) return;
 
-    private async Task Unlock()
-    {
-        var success = await PinLock.TryUnlockAsync(_pin);
+        _input += digit;
+
+        if (_input.Length < 4) return;
+
+        var success = await PinLock.TryUnlockAsync(_input);
         if (success)
         {
             await OnUnlocked.InvokeAsync();
@@ -44,7 +47,16 @@
         else
         {
             _error = "Onjuiste pincode.";
-            _pin = string.Empty;
+            _input = string.Empty;
+        }
+    }
+
+    private void HandleBackspace()
+    {
+        if (_input.Length > 0)
+        {
+            _input = _input[..^1];
+            _error = null;
         }
     }
 

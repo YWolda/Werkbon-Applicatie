@@ -3,44 +3,70 @@
 <div class="login-wrapper">
     <div class="login-card">
         <h2>Stel een pincode in</h2>
-        <p class="text-muted">Kies een pincode van 4 cijfers waarmee je de app voortaan snel kan ontgrendelen op dit toestel.</p>
+        <p class="text-muted">@(_stage == 1 ? "Kies een pincode van 4 cijfers." : "Herhaal je pincode ter bevestiging.")</p>
 
-        <input type="tel" inputmode="numeric" maxlength="4" class="form-control mb-2 pin-input"
-               placeholder="Nieuwe pincode" @bind="_pin" @bind:event="oninput" />
-        <input type="tel" inputmode="numeric" maxlength="4" class="form-control mb-2 pin-input"
-               placeholder="Herhaal pincode" @bind="_confirm" @bind:event="oninput" />
+        <div class="pin-dots mb-3">
+            @for (int i = 0; i < 4; i++)
+            {
+                <span class="pin-dot @(i < _currentInput.Length ? "filled" : "")"></span>
+            }
+        </div>
 
         @if (!string.IsNullOrEmpty(_error))
         {
             <div class="alert alert-danger">@_error</div>
         }
 
-        <button class="btn btn-primary w-100" @onclick="Save">Pincode instellen</button>
+        <NumericKeypad OnDigit="HandleDigit" OnBackspace="HandleBackspace" />
     </div>
 </div>
 
 @code {
     [Parameter] public EventCallback OnPinSet { get; set; }
 
-    private string _pin = string.Empty;
-    private string _confirm = string.Empty;
+    private int _stage = 1;
+    private string _firstPin = string.Empty;
+    private string _currentInput = string.Empty;
     private string? _error;
 
-    private async Task Save()
+    private async Task HandleDigit(string digit)
     {
-        if (_pin.Length != 4 || !_pin.All(char.IsDigit))
-        {
-            _error = "Vul een pincode van precies 4 cijfers in.";
-            return;
-        }
+        if (_currentInput.Length >= 4) return;
 
-        if (_pin != _confirm)
-        {
-            _error = "De pincodes komen niet overeen.";
-            return;
-        }
+        _error = null;
+        _currentInput += digit;
 
-        await PinLock.SetPinAsync(_pin);
-        await OnPinSet.InvokeAsync();
+        if (_currentInput.Length < 4) return;
+
+        if (_stage == 1)
+        {
+            _firstPin = _currentInput;
+            _currentInput = string.Empty;
+            _stage = 2;
+        }
+        else
+        {
+            if (_currentInput == _firstPin)
+            {
+                await PinLock.SetPinAsync(_currentInput);
+                await OnPinSet.InvokeAsync();
+            }
+            else
+            {
+                _error = "De pincodes komen niet overeen. Probeer opnieuw.";
+                _stage = 1;
+                _firstPin = string.Empty;
+                _currentInput = string.Empty;
+            }
+        }
+    }
+
+    private void HandleBackspace()
+    {
+        if (_currentInput.Length > 0)
+        {
+            _currentInput = _currentInput[..^1];
+            _error = null;
+        }
     }
 }
