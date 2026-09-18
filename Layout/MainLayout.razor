@@ -62,11 +62,11 @@ else
         {
             if (Auth.CurrentUser is null && !IsLoginPage)
             {
-                Nav.NavigateTo("/login");
+                Nav.NavigateTo("/login", forceLoad: true);
             }
             else if (Auth.CurrentUser is not null && IsLoginPage)
             {
-                Nav.NavigateTo("/");
+                Nav.NavigateTo("/", forceLoad: true);
             }
 
             if (Auth.CurrentUser is not null)
