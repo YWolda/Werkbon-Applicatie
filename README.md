@@ -98,3 +98,4 @@ hoef je de Razor-pagina's dan nauwelijks aan te passen.
 Voeg zelf een `icon-512.png` (512x512 pixels) toe aan de `wwwroot`-map voor een
 mooi icoon op je beginscherm. Zonder dit bestand werkt de app gewoon, maar toont
 Safari een standaard schermafbeelding als icoon.
+
