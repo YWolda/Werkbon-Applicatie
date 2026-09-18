@@ -83,31 +83,6 @@ else
         StateHasChanged();
     }
 
-<<<<<<< HEAD
-=======
-    private void HandleChange()
-    {
-        InvokeAsync(async () =>
-        {
-            if (Auth.CurrentUser is null && !IsLoginPage)
-            {
-                Nav.NavigateTo("/login", forceLoad: true);
-            }
-            else if (Auth.CurrentUser is not null && IsLoginPage)
-            {
-                Nav.NavigateTo("/", forceLoad: true);
-            }
-
-            if (Auth.CurrentUser is not null)
-            {
-                await CheckPinAsync();
-            }
-
-            StateHasChanged();
-        });
-    }
-
->>>>>>> 7f129894da2f6758eb132d67b477c69167599dc1
     private void HandlePinSet()
     {
         _hasPin = true;
