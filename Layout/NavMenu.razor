@@ -1,0 +1,27 @@
+@inject AuthService Auth
+@inject PinLockService PinLock
+
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <span class="navbar-brand mb-0 h1">⏱️ Uren Registratie</span>
+        @if (Auth.CurrentUser is not null)
+        {
+            <button class="btn btn-sm btn-outline-light" @onclick="Logout">Uitloggen</button>
+        }
+    </div>
+</nav>
+
+<div class="nav-tabs-wrapper">
+    <NavLink class="nav-tab" href="" Match="NavLinkMatch.All">Werkdag</NavLink>
+    <NavLink class="nav-tab" href="opdrachten">Opdrachten</NavLink>
+    <NavLink class="nav-tab" href="werkbon">Werkbon</NavLink>
+    <NavLink class="nav-tab" href="overzicht">Overzicht</NavLink>
+</div>
+
+@code {
+    private async Task Logout()
+    {
+        await PinLock.ClearPinAsync();
+        await Auth.LogoutAsync();
+    }
+}

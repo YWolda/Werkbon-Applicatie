@@ -1,0 +1,81 @@
+@page "/opdrachten"
+@inject TimeTrackingService Tracker
+
+<h1>Opdrachten</h1>
+
+<div class="card mb-4">
+    <h3>Nieuwe opdracht toevoegen</h3>
+    <input @bind="_name" placeholder="Naam opdracht" class="form-control mb-2" />
+    <input @bind="_projectNumber" placeholder="Projectnummer" class="form-control mb-2" />
+    <input @bind="_client" placeholder="Klantnaam" class="form-control mb-2" />
+    <input @bind="_location" placeholder="Locatie" class="form-control mb-2" />
+    <input @bind="_contactPerson" placeholder="Contactpersoon" class="form-control mb-2" />
+    <input @bind="_referenceClient" placeholder="Referentie klant" class="form-control mb-2" />
+    <textarea @bind="_description" placeholder="Projectomschrijving" class="form-control mb-2" rows="2"></textarea>
+
+    <button class="btn btn-primary w-100" @onclick="AddProject" disabled="@string.IsNullOrWhiteSpace(_name)">
+        Toevoegen
+    </button>
+</div>
+
+<h3>Actieve opdrachten</h3>
+
+@if (!Tracker.Projects.Any())
+{
+    <p>Nog geen opdrachten toegevoegd.</p>
+}
+else
+{
+    @foreach (var project in Tracker.Projects)
+    {
+        <div class="card mb-2">
+            <strong>@project.Name</strong> — @project.ClientName
+            <div class="text-muted small">
+                Projectnr: @project.ProjectNumber ·
+                Locatie: @project.Location ·
+                Contact: @project.ContactPerson
+            </div>
+            <button class="btn btn-sm btn-outline-secondary mt-2" @onclick="() => Archive(project.Id)">
+                Archiveren
+            </button>
+        </div>
+    }
+}
+
+@code {
+    private string _name = string.Empty;
+    private string _projectNumber = string.Empty;
+    private string _client = string.Empty;
+    private string _location = string.Empty;
+    private string _contactPerson = string.Empty;
+    private string _referenceClient = string.Empty;
+    private string _description = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Tracker.InitializeAsync();
+    }
+
+    private async Task AddProject()
+    {
+        if (string.IsNullOrWhiteSpace(_name)) return;
+
+        await Tracker.AddProjectAsync(new Project
+        {
+            Name = _name.Trim(),
+            ProjectNumber = _projectNumber.Trim(),
+            ClientName = _client.Trim(),
+            Location = _location.Trim(),
+            ContactPerson = _contactPerson.Trim(),
+            ReferenceClient = _referenceClient.Trim(),
+            Description = _description.Trim()
+        });
+
+        _name = _projectNumber = _client = _location = _contactPerson = _referenceClient = _description = string.Empty;
+    }
+
+    private async Task Archive(Guid id)
+    {
+        await Tracker.ArchiveProjectAsync(id);
+    }
+}

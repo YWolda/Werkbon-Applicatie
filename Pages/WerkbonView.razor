@@ -1,0 +1,193 @@
+@page "/werkbon-bekijken/{Id:guid}"
+@inject TimeTrackingService Tracker
+@inject WerkbonService Werkbonnen
+@inject IJSRuntime JS
+
+<h1>Werkbon bekijken</h1>
+
+@if (!_initialized)
+{
+    <p>Bezig met laden...</p>
+}
+else if (_record is null)
+{
+    <p>Deze werkbon kon niet gevonden worden.</p>
+}
+else
+{
+    var project = Tracker.GetProject(_record.ProjectId);
+
+    <div id="werkbonDocument" class="doc">
+        <div class="doc-header-row">
+            <img src="img/boikon-logo.jpg" class="doc-logo" alt="BOIKON" />
+            <div class="doc-title">SERVICE<br />REPORT</div>
+        </div>
+
+        <div class="doc-section-title">INFORMATION</div>
+        <table class="doc-info-table">
+            <tbody>
+                <tr>
+                    <td class="doc-label">Project number BOIKON</td>
+                    <td class="doc-value">@project?.ProjectNumber</td>
+                    <td class="doc-label">Customer name</td>
+                    <td class="doc-value">@project?.ClientName</td>
+                </tr>
+                <tr>
+                    <td class="doc-label">Date / week</td>
+                    <td class="doc-value">Week @_record.WeekNumber (@_record.WeekStart.ToString("dd-MM-yyyy") t/m @_record.WeekEnd.ToString("dd-MM-yyyy"))</td>
+                    <td class="doc-label">Reference client</td>
+                    <td class="doc-value">@project?.ReferenceClient</td>
+                </tr>
+                <tr>
+                    <td class="doc-label">Location</td>
+                    <td class="doc-value">@project?.Location</td>
+                    <td class="doc-label">Contact person</td>
+                    <td class="doc-value">@project?.ContactPerson</td>
+                </tr>
+                <tr>
+                    <td class="doc-label">Project description</td>
+                    <td class="doc-value" colspan="3">@project?.Description</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="doc-section-title">WORK DESCRIPTION</div>
+        <div class="doc-static-text">@_record.WorkDescription</div>
+
+        <div class="doc-section-title">MATERIALS</div>
+        <table class="doc-materials-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px">Qty.</th><th>Description</th>
+                    <th style="width: 60px">Qty.</th><th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Math.Max(2, (_record.Materials.Count + 1) / 2 * 2); i += 2)
+                {
+                    var left = i < _record.Materials.Count ? _record.Materials[i] : null;
+                    var right = i + 1 < _record.Materials.Count ? _record.Materials[i + 1] : null;
+                    <tr>
+                        <td>@left?.Quantity</td>
+                        <td>@left?.Description</td>
+                        <td>@right?.Quantity</td>
+                        <td>@right?.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="doc-section-title">HOURS</div>
+        <div class="doc-employee-line">
+            <span>Name employee (BOIKON): <strong>@_record.EmployeeName</strong></span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="doc-hours-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <th>@day.Date.ToString("ddd dd-MM", new System.Globalization.CultureInfo("en-GB"))</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Travel hrs: to</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@FormatHours(day.TravelToHours)</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>Work hours</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@FormatHours(day.WorkHours)</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>Prep./rework</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@FormatHours(day.PrepReworkHours)</td>
+                        }
+                    </tr>
+                    <tr class="overtime-row">
+                        <td>Overtime</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@FormatHours(day.OvertimeHours)</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>Travel hrs: back</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@FormatHours(day.TravelBackHours)</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>Kilometers</td>
+                        @foreach (var day in _record.DayHours)
+                        {
+                            <td>@day.Kilometers.ToString("0.#")</td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="doc-section-title">APPROVAL</div>
+        <div class="doc-approval-row">
+            <div class="doc-approval-box">
+                <div class="doc-caption-top">Name employee BOIKON:</div>
+                <div class="doc-static-text mb-1">@_record.EmployeeName</div>
+                @if (!string.IsNullOrEmpty(_record.EmployeeSignatureDataUrl))
+                {
+                    <img src="@_record.EmployeeSignatureDataUrl" class="signature-image" alt="Handtekening medewerker" />
+                }
+                <div class="doc-caption">Signature</div>
+            </div>
+            <div class="doc-approval-box">
+                <div class="doc-caption-top">Name client:</div>
+                <div class="doc-static-text mb-1">@_record.ClientSignerName</div>
+                @if (!string.IsNullOrEmpty(_record.ClientSignatureDataUrl))
+                {
+                    <img src="@_record.ClientSignatureDataUrl" class="signature-image" alt="Handtekening klant" />
+                }
+                <div class="doc-caption">Signature</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="doc-actions">
+        <button class="btn btn-outline-primary w-100 mb-2" @onclick="DownloadPdf">Downloaden als PDF</button>
+        <a href="overzicht" class="btn btn-outline-secondary w-100 mb-4">Terug naar overzicht</a>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _initialized = false;
+    private WerkbonRecord? _record;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Tracker.InitializeAsync();
+        await Werkbonnen.InitializeAsync();
+        _record = Werkbonnen.Records.FirstOrDefault(r => r.Id == Id);
+        _initialized = true;
+    }
+
+    private async Task DownloadPdf()
+    {
+        var filename = $"Werkrapport_week{_record!.WeekNumber}_{_record.Year}.pdf";
+        await JS.InvokeVoidAsync("pdfExport.exportElement", "werkbonDocument", filename);
+    }
+
+    private static string FormatHours(double hours) => hours == 0 ? "-" : hours.ToString("0.##");
+}

@@ -1,0 +1,142 @@
+@page "/"
+@implements IDisposable
+@inject TimeTrackingService Tracker
+
+<h1>Werkdag</h1>
+
+@if (!_initialized)
+{
+    <p>Bezig met laden...</p>
+}
+else if (Tracker.ActiveSegment is not null)
+{
+    var active = Tracker.ActiveSegment;
+    var today = Tracker.GetTodaySummary(active.ProjectId);
+    var breakDue = Tracker.IsBreakDue();
+
+    <div class="card active-card">
+        <h3>@Tracker.GetProjectName(active.ProjectId)</h3>
+
+        @if (breakDue && active.Type != SegmentType.Break)
+        {
+            <div class="alert alert-warning">
+                ⏰ Tijd voor een pauze — volgens het bedrijfsreglement graag elke 4 uur
+                minimaal een half uur pauze nemen.
+            </div>
+        }
+
+        <div class="toggle-row mb-3">
+            <button class="btn toggle-btn @(active.Type == SegmentType.Travel ? "btn-primary" : "btn-outline-secondary")"
+                    @onclick="() => SwitchType(SegmentType.Travel)">
+                🚗 Onderweg
+            </button>
+            <button class="btn toggle-btn @(active.Type == SegmentType.Work ? "btn-primary" : "btn-outline-secondary")"
+                    @onclick="() => SwitchType(SegmentType.Work)">
+                🔧 Aan het werk
+            </button>
+            <button class="btn toggle-btn @(active.Type == SegmentType.Break ? "btn-primary" : "btn-outline-secondary")"
+                    @onclick="() => SwitchType(SegmentType.Break)">
+                ☕ Pauze
+            </button>
+        </div>
+
+        <p class="text-muted mb-3">
+            Huidige status sinds @active.Start.ToString("HH:mm") (@FormatDuration(active.Duration))
+        </p>
+
+        <table class="table table-sm">
+            <tbody>
+                <tr><td>Reistijd heen</td><td>@FormatDuration(today.TravelTo)</td></tr>
+                <tr><td>Werkuren</td><td>@FormatDuration(today.Work)</td></tr>
+                <tr><td>Reistijd terug</td><td>@FormatDuration(today.TravelBack)</td></tr>
+                <tr><td>Pauze</td><td>@FormatDuration(today.Break)</td></tr>
+                @if (today.Overtime > TimeSpan.Zero)
+                {
+                    <tr class="overtime-row"><td>Overuren</td><td>@FormatDuration(today.Overtime)</td></tr>
+                }
+            </tbody>
+        </table>
+
+        <textarea @bind="_note" placeholder="Opmerking (optioneel)" class="form-control mb-2" rows="2"></textarea>
+        <button class="btn btn-danger w-100" @onclick="StopDay">Werkdag afsluiten</button>
+    </div>
+}
+else
+{
+    <h3>Start je werkdag</h3>
+
+    @if (!Tracker.Projects.Any())
+    {
+        <p>Je hebt nog geen opdrachten. Voeg er eerst een toe op de pagina <a href="opdrachten">Opdrachten</a>.</p>
+    }
+    else
+    {
+        <select @bind="_selectedProjectId" class="form-select mb-3">
+            <option value="">-- Kies een opdracht --</option>
+            @foreach (var project in Tracker.Projects)
+            {
+                <option value="@project.Id">@project.Name (@project.ClientName)</option>
+            }
+        </select>
+
+        <p class="text-muted">Waarmee begin je?</p>
+        <div class="toggle-row">
+            <button class="btn btn-outline-primary toggle-btn" @onclick='() => StartDay(SegmentType.Travel)' disabled="@string.IsNullOrEmpty(_selectedProjectId)">
+                🚗 Start: Onderweg
+            </button>
+            <button class="btn btn-outline-primary toggle-btn" @onclick='() => StartDay(SegmentType.Work)' disabled="@string.IsNullOrEmpty(_selectedProjectId)">
+                🔧 Start: Aan het werk
+            </button>
+        </div>
+    }
+}
+
+@code {
+    private bool _initialized = false;
+    private string _selectedProjectId = string.Empty;
+    private string _note = string.Empty;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Tracker.InitializeAsync();
+        Tracker.OnChange += HandleChange;
+        _initialized = true;
+
+        // Ververst het scherm elke seconde zodat de lopende tijd live meetelt.
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+
+    private async Task StartDay(SegmentType startType)
+    {
+        if (Guid.TryParse(_selectedProjectId, out var id))
+        {
+            await Tracker.StartDayAsync(id, startType);
+        }
+    }
+
+    private async Task SwitchType(SegmentType type)
+    {
+        await Tracker.SwitchTypeAsync(type);
+    }
+
+    private async Task StopDay()
+    {
+        await Tracker.StopDayAsync(_note);
+        _note = string.Empty;
+        _selectedProjectId = string.Empty;
+    }
+
+    private static string FormatDuration(TimeSpan ts) => $"{(int)ts.TotalHours}u {ts.Minutes}m";
+
+    public void Dispose()
+    {
+        Tracker.OnChange -= HandleChange;
+        _timer?.Dispose();
+    }
+}

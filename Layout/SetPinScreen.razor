@@ -1,0 +1,46 @@
+@inject PinLockService PinLock
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2>Stel een pincode in</h2>
+        <p class="text-muted">Kies een pincode van 4 cijfers waarmee je de app voortaan snel kan ontgrendelen op dit toestel.</p>
+
+        <input type="tel" inputmode="numeric" maxlength="4" class="form-control mb-2 pin-input"
+               placeholder="Nieuwe pincode" @bind="_pin" @bind:event="oninput" />
+        <input type="tel" inputmode="numeric" maxlength="4" class="form-control mb-2 pin-input"
+               placeholder="Herhaal pincode" @bind="_confirm" @bind:event="oninput" />
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        <button class="btn btn-primary w-100" @onclick="Save">Pincode instellen</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnPinSet { get; set; }
+
+    private string _pin = string.Empty;
+    private string _confirm = string.Empty;
+    private string? _error;
+
+    private async Task Save()
+    {
+        if (_pin.Length != 4 || !_pin.All(char.IsDigit))
+        {
+            _error = "Vul een pincode van precies 4 cijfers in.";
+            return;
+        }
+
+        if (_pin != _confirm)
+        {
+            _error = "De pincodes komen niet overeen.";
+            return;
+        }
+
+        await PinLock.SetPinAsync(_pin);
+        await OnPinSet.InvokeAsync();
+    }
+}

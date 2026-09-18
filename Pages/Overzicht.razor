@@ -1,0 +1,97 @@
+@page "/overzicht"
+@inject TimeTrackingService Tracker
+@inject WerkbonService Werkbonnen
+
+<h1>Overzicht</h1>
+
+<h3>Werkbonnen</h3>
+
+@if (!Werkbonnen.Records.Any())
+{
+    <p>Nog geen werkbonnen opgeslagen. Maak er een aan op de pagina <a href="werkbon">Werkbon</a>.</p>
+}
+else
+{
+    @foreach (var record in Werkbonnen.Records)
+    {
+        var project = Tracker.GetProject(record.ProjectId);
+
+        <div class="card mb-2">
+            <div class="d-flex justify-content-between">
+                <strong>Week @record.WeekNumber, @record.Year</strong>
+                <span class="@(record.IsSigned ? "text-success" : "text-warning")">
+                    @(record.IsSigned ? "✔ Ondertekend" : "⚠ Niet volledig ondertekend")
+                </span>
+            </div>
+            <div class="text-muted small mb-1">
+                @record.WeekStart.ToString("dd-MM-yyyy") t/m @record.WeekEnd.ToString("dd-MM-yyyy")
+            </div>
+            <table class="table table-sm mb-0">
+                <tbody>
+                    <tr><td>Opdracht</td><td>@(project?.Name ?? "(verwijderde opdracht)")</td></tr>
+                    <tr><td>Klant</td><td>@(project?.ClientName ?? "-")</td></tr>
+                    <tr><td>Voor wie</td><td>@record.ClientSignerName</td></tr>
+                    <tr><td>Gewerkt door</td><td>@record.EmployeeName</td></tr>
+                    <tr><td>Totaal werkuren</td><td>@record.DayHours.Sum(d => d.WorkHours).ToString("0.##")u</td></tr>
+                    <tr><td>Totaal overuren</td><td>@record.DayHours.Sum(d => d.OvertimeHours).ToString("0.##")u</td></tr>
+                </tbody>
+            </table>
+            <a href="werkbon-bekijken/@record.Id" class="btn btn-sm btn-outline-primary mt-2">Bekijken / downloaden als PDF</a>
+        </div>
+    }
+}
+
+<h3 class="mt-4">Uren per dag (alle opdrachten)</h3>
+
+@{
+    var projectDates = Tracker.Segments
+        .Where(s => !s.IsRunning)
+        .Select(s => DateOnly.FromDateTime(s.Start))
+        .Distinct()
+        .OrderByDescending(d => d)
+        .ToList();
+}
+
+@if (!projectDates.Any())
+{
+    <p>Nog geen afgeronde werkdagen.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Reistijd heen</th>
+                <th>Werk</th>
+                <th>Reistijd terug</th>
+                <th>Pauze</th>
+                <th>Overuren</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var date in projectDates)
+            {
+                var summary = Tracker.GetDaySummary(date);
+                <tr>
+                    <td>@date.ToString("dd-MM-yyyy")</td>
+                    <td>@FormatDuration(summary.TravelTo)</td>
+                    <td>@FormatDuration(summary.Work)</td>
+                    <td>@FormatDuration(summary.TravelBack)</td>
+                    <td>@FormatDuration(summary.Break)</td>
+                    <td class="@(summary.Overtime > TimeSpan.Zero ? "overtime-row" : "")">@FormatDuration(summary.Overtime)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Tracker.InitializeAsync();
+        await Werkbonnen.InitializeAsync();
+    }
+
+    private static string FormatDuration(TimeSpan ts) => $"{(int)ts.TotalHours}u {ts.Minutes}m";
+}

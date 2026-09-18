@@ -1,0 +1,292 @@
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f7f7f9;
+}
+
+.container {
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.nav-tabs-wrapper {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.nav-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.85rem 0;
+    text-decoration: none;
+    color: #444;
+    font-weight: 500;
+}
+
+.nav-tab.active {
+    border-bottom: 3px solid #03173d;
+    color: #03173d;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1rem;
+}
+
+.active-card {
+    border-left: 5px solid #198754;
+}
+
+.toggle-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+}
+
+.overtime-row {
+    color: #b02a37;
+    font-weight: 600;
+}
+
+.signature-canvas {
+    width: 100%;
+    max-width: 400px;
+    height: 110px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    background: white;
+    touch-action: none;
+    display: block;
+    margin: 0 auto;
+}
+
+.material-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.doc {
+    background: white;
+    border: 1px solid #0C203F;
+    padding: 0.85rem;
+    font-size: 0.78rem;
+    font-family: Arial, 'Microsoft Sans Serif', sans-serif;
+    line-height: 1.25;
+}
+
+.doc-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #0C203F;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.doc-logo {
+    height: 42px;
+}
+
+.doc-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0C203F;
+    text-align: right;
+    line-height: 1.1;
+    letter-spacing: 1px;
+}
+
+.doc-section-title {
+    font-weight: 700;
+    background: #0C203F;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.78rem;
+}
+
+.doc-employee-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.doc-caption-top {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.hour-input {
+    width: 60px;
+    text-align: center;
+}
+
+.doc-static-text {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    min-height: 2rem;
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+}
+
+.signature-image {
+    max-width: 100%;
+    height: 100px;
+    object-fit: contain;
+    border: 1px dashed #ccc;
+    background: white;
+}
+
+.doc-info-table, .doc-materials-table, .doc-hours-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doc-info-table td, .doc-materials-table td, .doc-materials-table th,
+.doc-hours-table td, .doc-hours-table th {
+    border: 1px solid #999;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.72rem;
+}
+
+.doc-hours-table th, .doc-hours-table td:first-child {
+    background: #f2f2f2;
+    font-weight: 600;
+}
+
+.doc-hours-table {
+    min-width: 700px;
+}
+
+.doc-label {
+    font-weight: 600;
+    background: #f2f2f2;
+    width: 15%;
+}
+
+.doc-value {
+    width: 35%;
+}
+
+.doc-input {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 100%;
+    padding: 0.1rem;
+    font-size: 0.72rem;
+    background: transparent;
+}
+
+.doc-input:focus {
+    outline: none;
+    border-bottom: 1px solid #03173d;
+}
+
+.doc-textarea {
+    width: 100%;
+    border: 1px solid #999;
+    padding: 0.35rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+}
+
+.doc-approval-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.doc-approval-box {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid #999;
+    padding: 0.4rem;
+    text-align: center;
+}
+
+.doc-caption {
+    font-size: 0.68rem;
+    color: #666;
+    margin-top: 0.2rem;
+    border-top: 1px solid #999;
+    padding-top: 0.2rem;
+}
+
+.doc-actions {
+    margin-top: 1rem;
+}
+
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 90vh;
+    padding: 1rem;
+}
+
+.login-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+}
+
+.login-logo {
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+.pin-input {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: 1rem;
+    padding: 0.5rem;
+}
+
+.table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
