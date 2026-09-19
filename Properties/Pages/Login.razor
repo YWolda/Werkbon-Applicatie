@@ -1,0 +1,50 @@
+@page "/login"
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <img src="img/boikon-logo.jpg" class="login-logo" alt="BOIKON" />
+        <h2>Inloggen</h2>
+
+        <input type="email" class="form-control mb-2" placeholder="E-mailadres" @bind="_email" />
+        <input type="password" class="form-control mb-2" placeholder="Wachtwoord" @bind="_password"
+               @onkeyup="@(async (e) => { if (e.Key == "Enter") await SubmitLogin(); })" />
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        <button class="btn btn-primary w-100" @onclick="SubmitLogin" disabled="@_isLoading">
+            @(_isLoading ? "Bezig..." : "Inloggen")
+        </button>
+    </div>
+</div>
+
+@code {
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string? _error;
+    private bool _isLoading;
+
+    private async Task SubmitLogin()
+    {
+        _error = null;
+        _isLoading = true;
+        StateHasChanged();
+
+        var (success, _) = await Auth.LoginAsync(_email, _password);
+
+        _isLoading = false;
+
+        if (!success)
+        {
+            _error = "Inloggen mislukt. Controleer je e-mailadres en wachtwoord.";
+        }
+        else
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+    }
+}

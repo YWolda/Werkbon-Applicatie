@@ -1,0 +1,53 @@
+@typeparam TValue
+
+<div class="custom-select">
+    <button type="button" class="custom-select-trigger @(_open ? "open" : "")" @onclick="ToggleOpen">
+        <span class="@(SelectedLabel is null ? "custom-select-placeholder" : "")">
+            @(SelectedLabel ?? Placeholder)
+        </span>
+        <span class="custom-select-arrow">▾</span>
+    </button>
+
+    @if (_open)
+    {
+        <div class="custom-select-backdrop" @onclick="Close"></div>
+        <div class="custom-select-panel">
+            @foreach (var option in Options)
+            {
+                <button type="button"
+                        class="custom-select-option @(EqualityComparer<TValue>.Default.Equals(option.Value, SelectedValue) ? "selected" : "")"
+                        @onclick="() => SelectOption(option.Value)">
+                    @option.Label
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    public class Option
+    {
+        public TValue Value { get; set; } = default!;
+        public string Label { get; set; } = string.Empty;
+    }
+
+    [Parameter] public List<Option> Options { get; set; } = new();
+    [Parameter] public TValue? SelectedValue { get; set; }
+    [Parameter] public EventCallback<TValue?> SelectedValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "-- Kies --";
+
+    private bool _open;
+
+    private string? SelectedLabel => Options.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, SelectedValue))?.Label;
+
+    private void ToggleOpen() => _open = !_open;
+
+    private void Close() => _open = false;
+
+    private async Task SelectOption(TValue value)
+    {
+        SelectedValue = value;
+        await SelectedValueChanged.InvokeAsync(value);
+        _open = false;
+    }
+}

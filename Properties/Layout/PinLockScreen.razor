@@ -1,0 +1,68 @@
+@inject PinLockService PinLock
+@inject AuthService Auth
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <img src="img/boikon-logo.jpg" class="login-logo" alt="BOIKON" />
+        <h2>Ontgrendelen</h2>
+        <p class="text-muted">Voer je pincode in.</p>
+
+        <div class="pin-dots mb-3">
+            @for (int i = 0; i < 4; i++)
+            {
+                <span class="pin-dot @(i < _input.Length ? "filled" : "")"></span>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        <NumericKeypad OnDigit="HandleDigit" OnBackspace="HandleBackspace" />
+
+        <button class="btn btn-link w-100 mt-2" @onclick="Logout">Pincode vergeten? Log opnieuw in</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnUnlocked { get; set; }
+
+    private string _input = string.Empty;
+    private string? _error;
+
+    private async Task HandleDigit(string digit)
+    {
+        if (_input.Length >= 4) return;
+
+        _input += digit;
+
+        if (_input.Length < 4) return;
+
+        var success = await PinLock.TryUnlockAsync(_input);
+        if (success)
+        {
+            await OnUnlocked.InvokeAsync();
+        }
+        else
+        {
+            _error = "Onjuiste pincode.";
+            _input = string.Empty;
+        }
+    }
+
+    private void HandleBackspace()
+    {
+        if (_input.Length > 0)
+        {
+            _input = _input[..^1];
+            _error = null;
+        }
+    }
+
+    private async Task Logout()
+    {
+        await PinLock.ClearPinAsync();
+        await Auth.LogoutAsync();
+    }
+}

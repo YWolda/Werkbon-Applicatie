@@ -1,0 +1,101 @@
+@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject PinLockService PinLock
+@inject NavigationManager Nav
+@implements IDisposable
+
+@if (!Auth.IsAuthReady)
+{
+    <div class="loading">Bezig met laden...</div>
+}
+else if (Auth.CurrentUser is null && !IsLoginPage)
+{
+    <div class="loading">Doorverwijzen naar inloggen...</div>
+}
+else if (Auth.CurrentUser is not null && !IsLoginPage && _pinCheckDone && !_hasPin)
+{
+    <SetPinScreen OnPinSet="HandlePinSet" />
+}
+else if (Auth.CurrentUser is not null && !IsLoginPage && _pinCheckDone && _hasPin && !PinLock.IsUnlockedThisSession)
+{
+    <PinLockScreen OnUnlocked="HandleUnlocked" />
+}
+else
+{
+    <div class="page">
+        @if (!IsLoginPage)
+        {
+            <NavMenu />
+        }
+        <main class="container">
+            @Body
+        </main>
+    </div>
+}
+
+@code {
+    private bool IsLoginPage => Nav.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
+    private bool _pinCheckDone;
+    private bool _hasPin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Belangrijk: EERST abonneren, DAN pas Firebase initialiseren.
+        // Zo missen we nooit de eerste melding over de inlogstatus.
+        Auth.OnChange += HandleChange;
+        await Auth.InitializeAsync();
+
+        // Ook meteen zelf checken, voor het geval de melding al binnen was
+        // vlak voordat we ons konden abonneren.
+        await ProcessAuthStateAsync();
+    }
+
+    private void HandleChange()
+    {
+        InvokeAsync(async () => await ProcessAuthStateAsync());
+    }
+
+    private async Task ProcessAuthStateAsync()
+    {
+        if (!Auth.IsAuthReady)
+        {
+            return;
+        }
+
+        if (Auth.CurrentUser is null && !IsLoginPage)
+        {
+            Nav.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        if (Auth.CurrentUser is not null && IsLoginPage)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+            return;
+        }
+
+        if (Auth.CurrentUser is not null)
+        {
+            _hasPin = await PinLock.HasPinSetAsync();
+        }
+
+        _pinCheckDone = true;
+        StateHasChanged();
+    }
+
+    private void HandlePinSet()
+    {
+        _hasPin = true;
+        StateHasChanged();
+    }
+
+    private void HandleUnlocked()
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Auth.OnChange -= HandleChange;
+    }
+}
